@@ -1,20 +1,27 @@
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["pyyaml"]
+# dependencies = ["pyyaml", "imageio-ffmpeg"]
 # ///
 """Batch creative downloader.
 
-Takes a batch YAML (see batches/TEMPLATE.yaml) or raw URLs and downloads each
-video in the best available quality via yt-dlp, with a .info.json metadata
-sidecar per file. Files land in downloads/<batch_id>/.
+Parses a batch YAML (see batches/TEMPLATE.yaml), downloads every post via
+tools/downloader/fetch_creatives.sh (yt-dlp, best quality, watermark-free,
+bytevc2 excluded), then writes a combined manifest that joins yt-dlp metadata
+with the batch's Spark codes / hooks. Files land in downloads/<batch_id>/.
 
 Usage:
     uv run tools/downloader/download.py batches/inbox/2026-08-05_example.yaml
     uv run tools/downloader/download.py --urls URL1 URL2 --batch-id manual-test
 
-Requires: yt-dlp on PATH (uv tool install "yt-dlp[default]"), and the
-environment's network policy must allow tiktok.com / *.tiktokcdn.com (plus
-instagram.com etc. for other platforms). ffmpeg recommended for format merging.
+Prereqs (once per container):
+    uv tool install "yt-dlp[default,curl-cffi]"   # curl-cffi is REQUIRED for TikTok
+Network: tiktok.com / tiktokv.com / tiktokcdn*.com must be allowed by the
+environment policy. Do NOT pass cookies for TikTok (known audio-loss bug);
+IG/FB need a cookies file via COOKIES_FILE env var.
+
+Note: for Spark-code items, the TikTok Business API is the preferred source
+(true full-quality file + MD5, see tools/tiktok/) once API access exists;
+this downloader is the universal fallback and the path for non-TikTok links.
 """
 import argparse
 import json
@@ -23,31 +30,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-
-# Highest-quality preference: H.265/H.264 source over adaptive re-encodes.
-# yt-dlp picks the best matching format; TikTok watermark-free formats are
-# preferred automatically by the extractor.
-FORMAT = "bv*+ba/b"
-
-def download_one(url: str, out_dir: Path, retries: int = 3) -> dict:
-    out_dir.mkdir(parents=True, exist_ok=True)
-    cmd = [
-        "yt-dlp",
-        "--format", FORMAT,
-        "--write-info-json",
-        "--no-playlist",
-        "--retries", str(retries),
-        "--output", str(out_dir / "%(uploader)s_%(id)s.%(ext)s"),
-        "--print", "after_move:filepath",
-        "--no-simulate",
-        "--quiet",
-        url,
-    ]
-    proc = subprocess.run(cmd, capture_output=True, text=True)
-    if proc.returncode != 0:
-        return {"url": url, "status": "failed", "error": proc.stderr.strip()[-2000:]}
-    filepath = proc.stdout.strip().splitlines()[-1] if proc.stdout.strip() else None
-    return {"url": url, "status": "ok", "file": filepath}
+FETCH = Path(__file__).resolve().parent / "fetch_creatives.sh"
 
 def load_batch(path: Path) -> dict:
     import yaml
@@ -61,29 +44,42 @@ def main() -> int:
     ap.add_argument("--batch-id", default=None)
     args = ap.parse_args()
 
+    items = []
     if args.batch_file:
         batch = load_batch(Path(args.batch_file))
         batch_id = batch["batch_id"]
-        urls = [i["post_url"] for i in batch.get("items", []) if i.get("post_url")]
+        items = [i for i in batch.get("items", []) if i.get("post_url")]
     elif args.urls:
         batch_id = args.batch_id or "manual"
-        urls = args.urls
+        items = [{"post_url": u} for u in args.urls]
     else:
         ap.error("need a batch file or --urls")
-        return 2
 
     out_dir = REPO_ROOT / "downloads" / batch_id
-    results = [download_one(u, out_dir) for u in urls]
+    out_dir.mkdir(parents=True, exist_ok=True)
+    urls_file = out_dir / "urls.txt"
+    urls_file.write_text("\n".join(i["post_url"] for i in items) + "\n")
 
-    report = {
-        "batch_id": batch_id,
-        "output_dir": str(out_dir),
-        "ok": sum(1 for r in results if r["status"] == "ok"),
-        "failed": sum(1 for r in results if r["status"] == "failed"),
-        "results": results,
-    }
-    print(json.dumps(report, indent=2))
-    return 0 if report["failed"] == 0 else 1
+    proc = subprocess.run(["bash", str(FETCH), str(urls_file), str(out_dir)])
+
+    # Join yt-dlp's manifest with batch metadata (spark codes, hooks) by URL id.
+    manifest_path = out_dir / "manifest.json"
+    downloaded = json.loads(manifest_path.read_text()) if manifest_path.exists() else []
+    by_id = {d["id"]: d for d in downloaded if d.get("id")}
+    combined = []
+    for item in items:
+        url = item["post_url"]
+        match = next((d for i, d in by_id.items() if i in url), None) or \
+                next((d for d in downloaded if d.get("webpage_url") == url), None)
+        combined.append({**item, "download": match,
+                         "status": "ok" if match and match.get("file") else "failed"})
+    (out_dir / "batch_manifest.json").write_text(
+        json.dumps({"batch_id": batch_id, "items": combined}, indent=2, ensure_ascii=False))
+
+    ok = sum(1 for c in combined if c["status"] == "ok")
+    print(json.dumps({"batch_id": batch_id, "output_dir": str(out_dir),
+                      "ok": ok, "failed": len(combined) - ok}, indent=2))
+    return 0 if ok == len(combined) and proc.returncode == 0 else 1
 
 if __name__ == "__main__":
     sys.exit(main())
