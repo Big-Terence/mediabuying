@@ -5,6 +5,18 @@ human is Terence (terence@newquest.ai). The mission: **Terence never opens
 Meta Ads Manager or TikTok Ads Manager again.** Agents handle creative intake,
 archiving, campaign setup, and budget management; Terence only approves.
 
+## Key facts
+
+- **Product**: Quest, NewQuest AI's personal-life agent app. Creatives are
+  tested per use case (e.g. diabetes, ADHD, debt payoff, sleep, quarter-life
+  crisis) to find the CAC per use case — typically ~10 creatives per use case.
+  Read `#ext-quest-scroll` history to absorb the current briefs.
+- **Agency**: Scroll (scroll.fr). Slack channel `#ext-quest-scroll`
+  (`C0BH13QSRDM`), contacts Leo and Benjamin. They announce "the new batch is
+  live", deliver via their portal `portal.scroll.fr` + TikTok creator post
+  links in Slack.
+- **Terence's Slack user ID**: `U0BA6LKTVQV`. Ping him there for approvals.
+
 ## The workflow (end to end)
 
 1. **Intake** — The agency delivers batches of creatives: TikTok post links +
