@@ -1,0 +1,16 @@
+# Downloaded creatives never go in git (they go to Google Drive)
+downloads/
+*.mp4
+*.mov
+*.webm
+
+# Secrets never go in git — they live in the Claude environment variables
+.env
+*.token
+*credentials*.json
+!*credentials*.example.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/

@@ -1,0 +1,5 @@
+{
+  "_comment": "Registry of campaigns/adsets/ads created or managed by agents, per platform. Every agent MUST update this after any campaign mutation, and read it before proposing changes.",
+  "tiktok": [],
+  "meta": []
+}

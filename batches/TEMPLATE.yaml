@@ -1,0 +1,21 @@
+# Creative batch file — drop a copy of this in batches/inbox/ as YYYY-MM-DD_<name>.yaml
+# (or just paste links + Spark codes in chat/Slack — the agent will build this file for you)
+batch_id: 2026-08-05_example        # unique, date-prefixed
+source: agency                      # agency | internal | other
+received_via: slack                 # slack | portal | email | chat
+notes: ""                           # anything the agency said about these creatives
+
+items:
+  # TikTok post with a Spark Ads code (the normal agency deliverable)
+  - platform: tiktok
+    post_url: https://www.tiktok.com/@creator/video/1234567890123456789
+    spark_code: "AAAA1111BBBB2222#XXXX"   # keep exact, quotes matter
+    spark_code_days: 30                    # 7 / 30 / 60 / 365 — ask agency if unknown
+    hook: "POV you found the app"          # short label for the creative angle
+    notes: ""
+
+  # Raw file or non-TikTok creative (link to file, Drive, Frame.io, etc.)
+  - platform: file
+    post_url: https://example.com/creative.mp4
+    hook: ""
+    notes: ""

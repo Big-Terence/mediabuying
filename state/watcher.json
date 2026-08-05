@@ -1,0 +1,6 @@
+{
+  "_comment": "Last-seen cursors for the check-inbox watcher, per source. Updated by scheduled sessions.",
+  "slack": { "channel_id": null, "last_ts": null },
+  "gmail": { "last_checked": null },
+  "portal": { "last_checked": null }
+}

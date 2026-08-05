@@ -1,0 +1,4 @@
+{
+  "_comment": "Registry of every ingested creative batch. Updated by the ingest-batch skill. Committed to git so every session sees the same state.",
+  "batches": []
+}
