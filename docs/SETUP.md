@@ -17,7 +17,7 @@ any integration works.
 | 7 | TikTok developer app + token | ⏳ Terence | step D — approval takes days, start early |
 | 8 | Meta system-user token | ⏳ Terence | step E — no review needed, ~15 min |
 | 9 | Scroll portal login | ⏳ Terence | password asked to Leo 2026-08-05; nice-to-have, NOT critical path (links arrive in Slack) |
-| 10 | Watcher Routine (hourly /check-inbox) | ✅ created | see "Always-on" below |
+| 10 | Watcher Routine (hourly /check-inbox) | ⚠️ created, needs 1 UI touch | `trig_01Lg5ykATHyGWr3zQhaNPcKJ`, hourly at :13. Connectors can't be attached via API in this org — Terence must open claude.ai/code/routines → this Routine → attach Slack + Gmail + Google Drive connectors. Until then fired sessions self-terminate silently. |
 | 11 | @Claude in Slack (chat entry point) | ⏳ Terence | step F, optional |
 | 12 | Network allowlist round 2 (TikTok CDN host) | 🔮 later | revealed by first successful `/tt_video/info/` call |
 
@@ -167,12 +167,14 @@ internal channel (e.g. `#media-buying`) and @Claude there.
 ## Always-on (Routines)
 
 The watcher is an account-level Routine (survives all sessions):
-**"Media buying — check inbox"** — hourly, fresh session per fire, connectors
-Slack+Gmail+Google Drive, push notification on noteworthy runs. It runs
+**"Media buying — check inbox"** (`trig_01Lg5ykATHyGWr3zQhaNPcKJ`) — hourly
+at :13, fresh session per fire, push notification on noteworthy runs. It runs
 `/check-inbox`: Slack watermark poll of `C0BH13QSRDM` → Gmail backup → ingest
-+ DM Terence a draft proposal when a batch lands. Manage at
-claude.ai/code/routines. A second "daily report" Routine is worth adding once
-ad-platform tokens exist.
++ DM Terence a draft proposal when a batch lands. ⚠️ One-time fix needed:
+attach the Slack + Gmail + Google Drive connectors to it in the
+claude.ai/code/routines UI (API attachment unavailable in this org); until
+then its runs self-terminate silently. A second "daily report" Routine is
+worth adding once ad-platform tokens exist.
 
 ## Asks to Scroll (social fixes worth more than code)
 
