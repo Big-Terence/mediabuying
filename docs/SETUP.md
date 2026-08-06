@@ -12,11 +12,11 @@ any integration works.
 | 2 | Google Drive API (`www.googleapis.com`) | ✅ reachable now | credential still needed (step C) — the only leg that can go fully live today |
 | 3 | Gmail (portal notification backup) | ✅ live | `from:scroll.fr` — note: not every batch emails |
 | 4 | GitHub (this repo) | ✅ live | via session proxy; leave GH_TOKEN unset |
-| 5 | Network allowlist round 1 | ⏳ Terence | step A below |
+| 5 | Network allowlist round 1 | 🟡 changed 2026-08-06 | Terence opened the domains; applies to sessions started AFTER the change — verify with the probe below in the next fresh session |
 | 6 | Google Drive credential | ⏳ Terence | step C — start here, works before allowlist |
 | 7 | TikTok developer app + token | ⏳ Terence | step D — approval takes days, start early |
 | 8 | Meta system-user token | ⏳ Terence | step E — no review needed, ~15 min |
-| 9 | Scroll portal login | ⏳ Terence | password asked to Leo 2026-08-05; nice-to-have, NOT critical path (links arrive in Slack) |
+| 9 | Scroll portal login | ⏳ waiting on Scroll | password re-send pending; Terence OK with storing it in plain env vars (`SCROLL_PORTAL_EMAIL`/`SCROLL_PORTAL_PASSWORD`) — low-sensitivity access. Nice-to-have, NOT critical path (links arrive in Slack) |
 | 10 | Watcher Routine (hourly /check-inbox) | ⚠️ created, needs 1 UI touch | `trig_01Lg5ykATHyGWr3zQhaNPcKJ`, hourly at :13. Connectors can't be attached via API in this org — Terence must open claude.ai/code/routines → this Routine → attach Slack + Gmail + Google Drive connectors. Until then fired sessions self-terminate silently. |
 | 11 | @Claude in Slack (chat entry point) | ⏳ Terence | step F, optional |
 | 12 | Network allowlist round 2 (TikTok CDN host) | 🔮 later | revealed by first successful `/tt_video/info/` call |
@@ -62,6 +62,15 @@ Alternative: Network access = Full — zero friction, broader surface,
 Terence's call. Expect ONE more addition later (round 2): the CDN hostname
 that TikTok's `preview_url` actually returns, unknowable until the first
 successful call.
+
+⚠️ Policy changes apply to sessions started AFTER the change. First action in
+any fresh session (agents: do this before assuming access):
+```
+for h in www.tiktok.com business-api.tiktok.com graph.facebook.com portal.scroll.fr; do
+  echo "$h -> $(curl -s -o /dev/null -w '%{http_code}' --max-time 10 https://$h/)"; done
+```
+Non-000 codes (even 403/404 from the site itself) = tunnel open. Then update
+row 5 above to ✅.
 
 ## Step B — Environment variables
 
