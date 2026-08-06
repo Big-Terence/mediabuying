@@ -1,5 +1,24 @@
 # HANDOFF — Passation vers le nouvel agent (repo `new-quest-ai/mediabuying`)
 
+> **✅ MIGRATION EXÉCUTÉE — 2026-08-06 (lire ceci d'abord).** Le projet reste
+> finalement sur **`Big-Terence/mediabuying`** — le plan
+> `new-quest-ai/mediabuying` décrit ci-dessous ne s'est pas concrétisé ;
+> partout où ce document dit « new-quest-ai/mediabuying », lire
+> « Big-Terence/mediabuying ». **`main` est désormais la branche canonique**
+> (les 7 commits, base `de8e198` ; le bundle n'a pas été nécessaire — le
+> contenu était déjà sur place). La Routine watcher n'a PAS été
+> recréée-supprimée : `create_trigger` refuse le paramètre `connectors` dans
+> cette organisation, une Routine neuve serait donc née sans Slack/Gmail/Drive
+> (= watcher désarmé) → son prompt a été corrigé **en place** via
+> `update_trigger` (même ID `trig_01Lg5ykATHyGWr3zQhaNPcKJ`, repo corrigé +
+> checkout `main` forcé), connecteurs et notifications préservés.
+> Environnement inchangé : `env_01K1T6ycGeVvLg2uVWxKF5iZ` (le seul du
+> compte — celui de cette session ET de la Routine). ⚠️ Probe réseau
+> 2026-08-06 : allowlist round 1 **non active** (CONNECT 403 sur les 4
+> domaines) → Step A à refaire par Terence ; le test de téléchargement TikTok
+> est différé jusque-là. La bascule GitHub de la branche par défaut vers
+> `main` reste à faire (checklist ligne 13). État à jour : `docs/SETUP.md`.
+
 > **Pour qui** : l'agent Claude Code qui reprend ce projet dans une session
 > liée à `new-quest-ai/mediabuying`. Ce document est la mémoire complète de
 > la conversation de mise en place (2026-08-05 → 2026-08-06) avec Terence

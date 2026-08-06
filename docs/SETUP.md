@@ -12,14 +12,15 @@ any integration works.
 | 2 | Google Drive API (`www.googleapis.com`) | ✅ reachable now | credential still needed (step C) — the only leg that can go fully live today |
 | 3 | Gmail (portal notification backup) | ✅ live | `from:scroll.fr` — note: not every batch emails |
 | 4 | GitHub (this repo) | ✅ live | via session proxy; leave GH_TOKEN unset |
-| 5 | Network allowlist round 1 | 🟡 changed 2026-08-06 | Terence opened the domains; applies to sessions started AFTER the change — verify with the probe below in the next fresh session |
+| 5 | Network allowlist round 1 | ❌ NOT active (probed 2026-08-06) | fresh-session probe 2026-08-06 00:56 UTC: all four hosts → `000` (proxy answered CONNECT 403 = policy denial; googleapis fine). The 2026-08-06 change didn't take — redo Step A on env "Default" (`env_01K1T6ycGeVvLg2uVWxKF5iZ`), then re-probe from a NEW fresh session |
 | 6 | Google Drive credential | ⏳ Terence | step C — start here, works before allowlist |
 | 7 | TikTok developer app + token | ⏳ Terence | step D — approval takes days, start early |
 | 8 | Meta system-user token | ⏳ Terence | step E — no review needed, ~15 min |
 | 9 | Scroll portal login | ⏳ waiting on Scroll | password re-send pending; Terence OK with storing it in plain env vars (`SCROLL_PORTAL_EMAIL`/`SCROLL_PORTAL_PASSWORD`) — low-sensitivity access. Nice-to-have, NOT critical path (links arrive in Slack) |
-| 10 | Watcher Routine (hourly /check-inbox) | ✅ live | `trig_01Lg5ykATHyGWr3zQhaNPcKJ`, hourly at :13; Slack + Gmail + Drive connectors attached 2026-08-06. ⚠️ After the repo migration it must be recreated from a session on the new repo — see `docs/HANDOFF.md` |
-| 11 | @Claude in Slack (chat entry point) | ⏳ Terence | step F, optional |
+| 10 | Watcher Routine (hourly /check-inbox) | ✅ live | `trig_01Lg5ykATHyGWr3zQhaNPcKJ`, hourly at :13 UTC; Slack + Gmail + Drive connectors attached. Post-migration fix 2026-08-06: prompt updated IN PLACE (repo = Big-Terence/mediabuying, forces `git checkout main`) — NOT recreated, because `create_trigger` rejects the `connectors` param in this org and a fresh trigger would have been born without Slack/Gmail/Drive |
+| 11 | @Claude in Slack (chat entry point) | ⏳ Terence | step F, optional. Note: a Claude app joined `#ext-quest-scroll` on 2026-08-05 — Slack Connect still blocks bot posts there, so create an internal channel for @Claude |
 | 12 | Network allowlist round 2 (TikTok CDN host) | 🔮 later | revealed by first successful `/tt_video/info/` call |
+| 13 | GitHub default branch → `main` | ⏳ Terence | `main` is canonical since the 2026-08-06 migration. Flip it: repo Settings → General → Default branch → `main` (10 s). Until then fresh sessions clone `claude/automated-media-buying-setup-d13fh2` (stale); the watcher prompt already forces `main`. After the flip, the two old `claude/*` branches can be deleted |
 
 ## Step A — Network allowlist (round 1)
 
@@ -177,14 +178,20 @@ internal channel (e.g. `#media-buying`) and @Claude there.
 
 The watcher is an account-level Routine (survives all sessions):
 **"Media buying — check inbox"** (`trig_01Lg5ykATHyGWr3zQhaNPcKJ`) — hourly
-at :13, fresh session per fire, push notification on noteworthy runs. It runs
-`/check-inbox`: Slack watermark poll of `C0BH13QSRDM` → Gmail backup → ingest
-+ DM Terence a draft proposal when a batch lands. Slack + Gmail + Google
-Drive connectors are attached (2026-08-06) — the watcher is fully armed.
-⚠️ It still fires sessions on the OLD repo's environment: after the repo
-migration, recreate it from a session running on the new repo (see
-`docs/HANDOFF.md` § Routine), then delete the old trigger. A second "daily
-report" Routine is worth adding once ad-platform tokens exist.
+at :13 UTC, fresh session per fire in env `env_01K1T6ycGeVvLg2uVWxKF5iZ`,
+push notification on noteworthy runs. It runs `/check-inbox` on `main`:
+Slack watermark poll of `C0BH13QSRDM` → Gmail backup → ingest + DM Terence a
+draft proposal when a batch lands. Slack + Gmail + Google Drive connectors
+are attached — the watcher is fully armed. Post-migration (2026-08-06) the
+prompt was corrected IN PLACE via `update_trigger` (repo name + forced
+`git checkout main`); recreate-and-delete was rejected because
+`create_trigger` cannot attach connectors in this org — a fresh trigger
+would have been born disarmed. ⚠️ Watch-item: the 01:13 and 02:14 UTC fires
+on 2026-08-06 pushed no cursor commit despite unseen channel messages —
+if `state/watcher.json` still hasn't moved after a few fires, connectors may
+not be loading in scheduled sessions; check the Routine's session list in
+the claude.ai UI. A second "daily report" Routine is worth adding once
+ad-platform tokens exist.
 
 ## Asks to Scroll (social fixes worth more than code)
 
