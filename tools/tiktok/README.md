@@ -11,7 +11,10 @@ headless-auth story were unverifiable at research time (network blocked).
 
 - Base URL: `https://business-api.tiktok.com/open_api/v1.3/`
 - Sandbox: `https://sandbox-ads.tiktok.com/open_api/v1.3/` (no app review
-  needed — build/test campaign+adgroup+ad CRUD there first)
+  needed). ⚠️ Sandbox supports only 22 endpoints — campaign/adgroup/ad CRUD,
+  file upload, identity/create, report — and has **zero `tt_video/*`**
+  coverage (error 40014). Use it for campaign scaffolding only; develop the
+  Spark leg against production with one throwaway code on a PAUSED ad.
 - Auth: header literally named `Access-Token`. Tokens DO NOT expire (no
   refresh dance). Env vars: `TIKTOK_APP_ID`, `TIKTOK_SECRET`,
   `TIKTOK_ACCESS_TOKEN`, `TIKTOK_ADVERTISER_ID`.
@@ -32,13 +35,20 @@ headless-auth story were unverifiable at research time (network blocked).
    Drive. `/identity/video/info/` calls the same field `url`. CAROUSEL posts:
    `video_info` is null; use `carousel_info.image_info[].image_url` (90-day
    validity).
+   **Day-one test** (docs label the field "preview"; full-quality is
+   plausible, not proven): compare Content-Length to `size` and body MD5 to
+   `signature` — `cli.py spark-download` does exactly this. Match ⇒ it's the
+   real file and yt-dlp becomes unnecessary for TikTok archival. Also log the
+   CDN hostname of the returned URL — it's unknown in advance and needs its
+   own allowlist entry (egress round 2; likely `*.tiktokcdn.com` /
+   `*.byteimg.com`).
 3. **Bind**: `POST /tt_video/authorize/` `{advertiser_id, auth_code}` →
    empty data on success; re-read via `/tt_video/info/` or `/tt_video/list/`.
-   ⚠️ One research source claims redemption is UI-only (Ads Manager → Tools →
-   Creative library → Spark ads posts → Apply for Authorization, 20 codes max
-   per batch); the endpoint above is documented in the v1.3 docs mirror with
-   full schemas. VERIFY LIVE on first use; fall back to asking Terence to
-   redeem in the UI if the endpoint 404s.
+   Endpoint confirmed (doc_id 1738376435339265 + 25 independent
+   implementations on GitHub) — redemption is fully automated, no Ads Manager
+   detour, one code per call. Terence's approval gate is at campaign launch,
+   not at redemption. Ads Manager UI (Tools → Creative library → Spark ads
+   posts) remains the manual fallback.
    Duet/stitch posts need the second owner's code as `original_post_auth_code`.
 4. **Create ad**: `POST /ad/create/` — array key is **`creatives`** (not
    `ads`): `{advertiser_id, adgroup_id, creatives:[{ad_name,

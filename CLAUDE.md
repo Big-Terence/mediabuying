@@ -15,7 +15,12 @@ archiving, campaign setup, and budget management; Terence only approves.
   (`C0BH13QSRDM`), contacts Leo and Benjamin. They announce "the new batch is
   live", deliver via their portal `portal.scroll.fr` + TikTok creator post
   links in Slack.
-- **Terence's Slack user ID**: `U0BA6LKTVQV`. Ping him there for approvals.
+- **Terence's Slack user ID**: `U0BA6LKTVQV`. Ping him there for approvals —
+  always by DM, never in `#ext-quest-scroll` (it's a Slack Connect channel:
+  bot posts are refused there, and draft proposals must not be visible to the
+  agency anyway).
+- **Approval gate is at campaign launch**, not at Spark-code redemption or
+  downloading — ingest/archive runs unattended.
 
 ## The workflow (end to end)
 
@@ -30,10 +35,13 @@ archiving, campaign setup, and budget management; Terence only approves.
    as a short plan. Ping Terence (Slack preferred) with "new batch ready —
    here's the proposed setup, go?". **Never launch anything without an
    explicit yes.**
-4. **Execute** — On approval, create/update campaigns via the TikTok and Meta
-   tooling (`tools/tiktok/`, `tools/meta/`, or the MCP servers in `.mcp.json`).
-   Spark Ads posts are used natively on TikTok via their Spark code; downloaded
-   files are used as creatives on Meta.
+4. **Execute** — On approval, create/update campaigns via the CLIs
+   (`tools/tiktok/cli.py`, `tools/meta/cli.py`). Plain scripts + env vars are
+   the execution path by design: repo `.mcp.json` servers do NOT auto-load in
+   cloud sessions (untrusted-folder rule), CLIs work identically in
+   interactive sessions, Routines, and Actions. Spark Ads posts run natively
+   on TikTok via their Spark code (redemption is automated via API);
+   downloaded files are used as creatives on Meta.
 5. **Record** — Update `state/campaigns.json` after every mutation. This file
    is the shared memory between sessions — read it before proposing anything,
    write it after changing anything, commit and push both state files.

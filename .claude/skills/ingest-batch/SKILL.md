@@ -14,19 +14,28 @@ message, a portal export, an existing YAML), produce a batch YAML in
   match by order; if ambiguous, ask Terence rather than guess.
 - Spark codes are copied EXACTLY (they are case-sensitive tokens).
 
-## 2. Download
-```
-uv tool install "yt-dlp[default]" 2>/dev/null; uv run tools/downloader/download.py batches/inbox/<file>.yaml
-```
-Verify every item downloaded (report lists ok/failed). On proxy 403 CONNECT
-failures, the network policy is blocking the domain — tell Terence which
-domain to allowlist in the environment settings, don't retry forever.
+## 2. Download (order of preference)
+1. **TikTok API** (items with a Spark code, once `TIKTOK_ACCESS_TOKEN`
+   exists): `uv run tools/tiktok/cli.py spark-download --auth-code '...'` —
+   full-quality MP4 with MD5 verification, then
+   `spark-authorize` to bind (automated; no approval needed at this stage).
+2. **Portal master files** (once portal access exists) — best quality.
+3. **yt-dlp fallback** (no code / no token / non-TikTok):
+   `uv tool install "yt-dlp[default,curl-cffi]"` (curl-cffi is mandatory for
+   TikTok), then `uv run tools/downloader/download.py batches/inbox/<file>.yaml`.
+
+Verify every item (reports list ok/failed). On proxy 403 CONNECT failures the
+network policy blocks the domain — tell Terence WHICH host (this is expected
+once for the TikTok CDN, see SETUP.md round 2), don't retry forever.
 
 ## 3. Archive to Google Drive
-Upload each video to `01_Inbox_Raw/<batch_id>/` (folder IDs in
-`docs/SETUP.md`). Prefer the Drive uploader in `tools/drive/`; the Drive MCP
-connector works for small files but not large videos. Also upload a
-`manifest.md` listing each file with its post URL, Spark code, and hook label.
+`uv run tools/drive/upload.py upload --files downloads/<batch>/*.mp4 --lane
+01_Inbox_Raw --batch-id <batch_id> --props '{"spark_code":"..."}'` — the
+uploader creates `<lane>/<year>/<batch_id>/`, dedupes by MD5, stamps
+appProperties. Never upload video bytes through the Drive MCP connector
+(context-size impossible); connector is fine for the manifest text file.
+Also upload a `manifest.md` listing each file with post URL, Spark code,
+auth window, and hook label.
 
 ## 4. Record
 Append the batch to `state/batches.json` (id, date, items with post_url,
@@ -35,7 +44,10 @@ spark_code, drive file IDs, local status). Move the YAML to
 
 ## 5. Propose (draft only — never launch)
 Read `state/campaigns.json` for current structure. Draft a setup: which
-campaigns/adgroups get which creatives, TikTok side (Spark codes) and Meta
-side (downloaded files), suggested budgets based on current spend. Send the
-proposal to Terence (Slack if available, otherwise chat) and STOP. Execution
-happens only after his explicit approval, via `/execute-setup`.
+campaigns/adgroups get which creatives, TikTok side (Spark codes, note each
+code's auth_end_time) and Meta side (downloaded files; prefer partnership-ad
+codes when the creator is on Instagram), suggested budgets based on current
+spend. Creatives map to use cases (see channel briefs) — flag any creative
+that doesn't match a briefed use case, like Terence does. DM the proposal to
+Terence (`U0BA6LKTVQV`; chat if Slack unavailable) and STOP. Execution only
+after explicit approval, via `/execute-setup`.
